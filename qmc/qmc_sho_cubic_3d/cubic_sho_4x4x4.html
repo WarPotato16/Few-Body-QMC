@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QMC cubic lattice occupation map</title>
+<script src="plotly.min.js"></script>
+<style>
+html,body{width:100%;height:100%;margin:0;background:#000;color:#eee;overflow:hidden;font-family:Inter,Segoe UI,Arial,sans-serif}
+#plot{position:absolute;inset:0}
+#panel{position:absolute;left:18px;top:16px;z-index:10;width:min(440px,calc(100vw - 70px));padding:14px 16px;border:1px solid rgba(255,190,40,.3);border-radius:12px;background:rgba(0,0,0,.74);box-shadow:0 0 34px rgba(255,120,0,.16);backdrop-filter:blur(8px)}
+#panel h1{font-size:18px;margin:0 0 7px;color:#ffd166;text-shadow:0 0 14px rgba(255,197,66,.6)}
+#panel p{font-size:12px;line-height:1.5;margin:4px 0;color:#bbb}
+#panel b,#selected{color:#fff}
+#error{display:none;position:absolute;inset:0;place-items:center;text-align:center;padding:40px;color:#ffbd59;background:#000;z-index:20}
+</style>
+</head>
+<body>
+<div id="plot"></div>
+<div id="panel"><h1>QMC 3D cubic occupation</h1><p><b>Drag</b> to orbit, <b>scroll</b> to zoom, hover for values, and <b>click a site</b> to pin its details.</p><p id="meta"></p><p id="selected">No site selected.</p></div>
+<div id="error">Plotly could not be loaded. Keep <b>plotly.min.js</b> in the same folder as this HTML file.</div>
+<script>
+const L=4;
+const N=2;
+const beta=1;
+const energy=-382.912701083333;
+const chains=12;
+const measurements=12000000;
+const boundary='periodic';
+const model='hardcore_boson';
+const trap=true;
+const spacing=1;
+const occupation=[0.0251440759375008,0.028527357708332,0.0290048053125001,0.0252158976041636,0.0292675104166637,0.032717693854165,0.0331377580208379,0.0295663805208294,0.028140701770834,0.0317650408333327,0.0329852078125011,0.0292929834375013,0.0261488646874994,0.0307210930208307,0.0293110445833327,0.0257129502083323,0.0288262877083326,0.0325828591666659,0.032038919270831,0.0283703678124992,0.0328020272916646,0.0371742059375046,0.0383579256249983,0.03448793354167,0.0326146552083363,0.0363363315624995,0.0369871378125002,0.0329463101041627,0.0289391980208305,0.0330741970833316,0.0327618235416648,0.0288778469791658,0.0288883002083343,0.0330459124999976,0.0322276706249965,0.0286596870833353,0.0318510740625017,0.0375751674999983,0.0375009046875029,0.0325905332291685,0.0343586989583366,0.0386121503125022,0.0377959235416708,0.0333419535416645,0.0302343322916655,0.0338896757291646,0.0332557989583306,0.0279276028124979,0.0251973080208345,0.0281215085416675,0.029504521145832,0.0254548892708317,0.0278602262499961,0.033560168229167,0.0342435857291673,0.029103940624999,0.0302613043749998,0.0345142198958278,0.0340688141666658,0.0297415378124974,0.0275690853124996,0.0303059817708349,0.0290753360416661,0.0258247943750012];
+const potential=[0.84375,0.59375,0.59375,0.84375,0.59375,0.34375,0.34375,0.59375,0.59375,0.34375,0.34375,0.59375,0.84375,0.59375,0.59375,0.84375,0.59375,0.34375,0.34375,0.59375,0.34375,0.09375,0.09375,0.34375,0.34375,0.09375,0.09375,0.34375,0.59375,0.34375,0.34375,0.59375,0.59375,0.34375,0.34375,0.59375,0.34375,0.09375,0.09375,0.34375,0.34375,0.09375,0.09375,0.34375,0.59375,0.34375,0.34375,0.59375,0.84375,0.59375,0.59375,0.84375,0.59375,0.34375,0.34375,0.59375,0.59375,0.34375,0.34375,0.59375,0.84375,0.59375,0.59375,0.84375];
+
+if(typeof Plotly==='undefined'){
+  document.getElementById('error').style.display='grid';
+}else{
+const xs=[],ys=[],zs=[],values=[],sizes=[],hover=[],siteIds=[];
+const minP=Math.min(...occupation),maxP=Math.max(...occupation);
+const span=Math.max(1e-15,maxP-minP);
+for(let site=0;site<occupation.length;site++){
+  const x=site%L;
+  const y=Math.floor(site/L)%L;
+  const z=Math.floor(site/(L*L));
+  const p=occupation[site];
+  const u=(p-minP)/span;
+  xs.push(x);ys.push(y);zs.push(z);values.push(p);sizes.push(8+18*Math.pow(u,.72));siteIds.push(site);
+  hover.push(`site ${site}<br>(x,y,z)=(${x},${y},${z})<br>&lt;n<sub>i</sub>&gt;=${p.toFixed(8)}<br>single-particle p=${(p/N).toFixed(8)}<br>V=${potential[site].toFixed(8)}`);
+}
+const edgeX=[],edgeY=[],edgeZ=[];
+function edge(a,b){edgeX.push(a[0],b[0],null);edgeY.push(a[1],b[1],null);edgeZ.push(a[2],b[2],null);}
+for(let z=0;z<L;z++)for(let y=0;y<L;y++)for(let x=0;x<L;x++){
+  if(x+1<L)edge([x,y,z],[x+1,y,z]);
+  if(y+1<L)edge([x,y,z],[x,y+1,z]);
+  if(z+1<L)edge([x,y,z],[x,y,z+1]);
+}
+const traces=[
+ {type:'scatter3d',mode:'lines',x:edgeX,y:edgeY,z:edgeZ,hoverinfo:'skip',showlegend:false,line:{color:'rgba(255,255,255,.10)',width:2}},
+ {type:'scatter3d',mode:'markers',x:xs,y:ys,z:zs,hoverinfo:'skip',showlegend:false,
+  marker:{size:sizes.map(v=>v*2.25),color:values,colorscale:'Inferno',cmin:minP,cmax:maxP,opacity:.13,line:{width:0}}},
+ {type:'scatter3d',mode:'markers',x:xs,y:ys,z:zs,text:hover,customdata:siteIds,hovertemplate:'%{text}<extra></extra>',showlegend:false,
+  marker:{size:sizes,color:values,colorscale:'Inferno',cmin:minP,cmax:maxP,opacity:1,line:{color:'rgba(255,235,145,.68)',width:1},
+  colorbar:{title:{text:'&lt;n<sub>i</sub>&gt;',font:{color:'#eee'}},tickfont:{color:'#ddd'},thickness:14,len:.62,outlinecolor:'#555'}}},
+ {type:'scatter3d',mode:'markers',x:[],y:[],z:[],hoverinfo:'skip',showlegend:false,
+  marker:{size:34,color:'#fff3a1',opacity:.34,line:{color:'#fff6bd',width:2}}}
+];
+const axis={backgroundcolor:'#000',gridcolor:'rgba(255,255,255,.08)',zerolinecolor:'rgba(255,255,255,.16)',tickfont:{color:'#aaa'},titlefont:{color:'#ddd'},showbackground:true,dtick:1,range:[-.45,L-.55]};
+const iso={eye:{x:1.55,y:1.55,z:1.45},up:{x:0,y:0,z:1}};
+const layout={paper_bgcolor:'#000',plot_bgcolor:'#000',margin:{l:0,r:0,t:0,b:0},showlegend:false,
+ scene:{bgcolor:'#000',xaxis:{...axis,title:'x'},yaxis:{...axis,title:'y'},zaxis:{...axis,title:'z'},aspectmode:'cube',camera:iso},
+ updatemenus:[{type:'buttons',direction:'left',x:.99,y:.98,xanchor:'right',yanchor:'top',bgcolor:'rgba(20,20,20,.84)',bordercolor:'#6d4c1f',font:{color:'#ffd166'},buttons:[
+  {label:'Isometric',method:'relayout',args:[{'scene.camera':iso}]},
+  {label:'Top',method:'relayout',args:[{'scene.camera':{eye:{x:0,y:0,z:2.6},up:{x:0,y:1,z:0}}}]},
+  {label:'Front',method:'relayout',args:[{'scene.camera':{eye:{x:0,y:2.6,z:0},up:{x:0,y:0,z:1}}}]},
+  {label:'Side',method:'relayout',args:[{'scene.camera':{eye:{x:2.6,y:0,z:0},up:{x:0,y:0,z:1}}}]}
+ ]}]
+};
+Plotly.newPlot('plot',traces,layout,{responsive:true,displaylogo:false,scrollZoom:true});
+document.getElementById('meta').innerHTML=`${L}×${L}×${L} (${L**3} sites), N=${N}, β=${beta}, E=${energy.toFixed(8)}<br>${model}, ${boundary} boundaries, ${trap?'3D harmonic trap':'no external potential'}, a=${spacing}<br><b>${chains} chain${chains===1?'':'s'}</b>, ${measurements.toLocaleString()} pooled measurements`;
+document.getElementById('plot').on('plotly_click',ev=>{
+  const pt=ev.points?.[0]; if(!pt || pt.customdata===undefined)return;
+  const site=Number(pt.customdata),x=site%L,y=Math.floor(site/L)%L,z=Math.floor(site/(L*L));
+  Plotly.restyle('plot',{x:[[x]],y:[[y]],z:[[z]]},[3]);
+  document.getElementById('selected').innerHTML=`Selected <b>site ${site}</b> at (${x}, ${y}, ${z})<br>&lt;n<sub>i</sub>&gt;=${occupation[site].toFixed(9)}, single-particle p=${(occupation[site]/N).toFixed(9)}, V=${potential[site].toFixed(9)}`;
+});
+}
+</script>
+</body>
+</html>

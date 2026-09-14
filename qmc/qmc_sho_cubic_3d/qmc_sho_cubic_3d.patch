@@ -1,0 +1,512 @@
+--- /mnt/data/qmc_sho_3d_12chain.cpp	2026-07-19 14:04:05.468256517 +0000
++++ /mnt/data/qmc_sho_cubic_3d.cpp	2026-07-19 14:09:18.614681741 +0000
+@@ -51,7 +51,7 @@
+     int particleCount = 2;
+     double beta = 1.0;
+     double hoppingT = 1.0;
+-    int stringLength = 200;
++    int stringLength = 800;
+     long long thermalizationSweeps = 1000;
+     long long measurementSweeps = 10000;
+     int measureEvery = 1;
+@@ -68,6 +68,7 @@
+     double latticeSpacing = 1.0;
+     double trapCenterX = std::numeric_limits<double>::quiet_NaN();
+     double trapCenterY = std::numeric_limits<double>::quiet_NaN();
++    double trapCenterZ = std::numeric_limits<double>::quiet_NaN();
+     double potentialShiftMargin = 1.0;
+ 
+     // The QMC run writes CSV plus an interactive Plotly HTML file.
+@@ -249,31 +250,40 @@
+ }
+ 
+ // Lattice and basis
+-std::vector<Bond> makeSquareLatticeBonds(int latticeSize, BoundaryCondition boundary) {
++std::vector<Bond> makeCubicLatticeBonds(int latticeSize, BoundaryCondition boundary) {
+     std::vector<Bond> bonds;
+-    int expectedBondCount = (boundary == BoundaryCondition::Periodic)
+-        ? 2 * latticeSize * latticeSize
+-        : 2 * latticeSize * (latticeSize - 1);
++    const int siteCount = latticeSize * latticeSize * latticeSize;
++    const int expectedBondCount = (boundary == BoundaryCondition::Periodic)
++        ? 3 * siteCount
++        : 3 * latticeSize * latticeSize * (latticeSize - 1);
+     bonds.reserve(std::max(0, expectedBondCount));
+ 
+-    auto site = [latticeSize](int x, int y) {
+-        return y * latticeSize + x;
++    auto site = [latticeSize](int x, int y, int z) {
++        return x + latticeSize * (y + latticeSize * z);
+     };
+ 
+-    for (int y = 0; y < latticeSize; ++y) {
+-        for (int x = 0; x < latticeSize; ++x) {
+-            int i = site(x, y);
+-
+-            if (x + 1 < latticeSize) {
+-                bonds.push_back({i, site(x + 1, y)});
+-            } else if (boundary == BoundaryCondition::Periodic) {
+-                bonds.push_back({i, site(0, y)});
+-            }
++    for (int z = 0; z < latticeSize; ++z) {
++        for (int y = 0; y < latticeSize; ++y) {
++            for (int x = 0; x < latticeSize; ++x) {
++                const int i = site(x, y, z);
++
++                if (x + 1 < latticeSize) {
++                    bonds.push_back({i, site(x + 1, y, z)});
++                } else if (boundary == BoundaryCondition::Periodic) {
++                    bonds.push_back({i, site(0, y, z)});
++                }
+ 
+-            if (y + 1 < latticeSize) {
+-                bonds.push_back({i, site(x, y + 1)});
+-            } else if (boundary == BoundaryCondition::Periodic) {
+-                bonds.push_back({i, site(x, 0)});
++                if (y + 1 < latticeSize) {
++                    bonds.push_back({i, site(x, y + 1, z)});
++                } else if (boundary == BoundaryCondition::Periodic) {
++                    bonds.push_back({i, site(x, 0, z)});
++                }
++
++                if (z + 1 < latticeSize) {
++                    bonds.push_back({i, site(x, y, z + 1)});
++                } else if (boundary == BoundaryCondition::Periodic) {
++                    bonds.push_back({i, site(x, y, 0)});
++                }
+             }
+         }
+     }
+@@ -281,40 +291,69 @@
+     return bonds;
+ }
+ 
+-std::vector<Mask> makeFixedParticleBasis(int siteCount, int particleCount) {
+-    if (siteCount <= 0 || siteCount > 63) {
+-        throw std::runtime_error("This bit-mask implementation requires 1 <= siteCount <= 63.");
++void appendFixedParticleStates(
++    int siteCount,
++    int nextSite,
++    int particlesRemaining,
++    Mask current,
++    std::vector<Mask>& basis
++) {
++    if (particlesRemaining == 0) {
++        basis.push_back(current);
++        return;
++    }
++    if (siteCount - nextSite < particlesRemaining) {
++        return;
++    }
++
++    const int latestStart = siteCount - particlesRemaining;
++    for (int site = nextSite; site <= latestStart; ++site) {
++        appendFixedParticleStates(
++            siteCount,
++            site + 1,
++            particlesRemaining - 1,
++            current | (Mask{1} << site),
++            basis
++        );
+     }
++}
+ 
++long double binomialEstimate(int n, int k) {
++    k = std::min(k, n - k);
++    long double value = 1.0L;
++    for (int i = 1; i <= k; ++i) {
++        value *= static_cast<long double>(n - k + i) / static_cast<long double>(i);
++    }
++    return value;
++}
++
++std::vector<Mask> makeFixedParticleBasis(int siteCount, int particleCount) {
++    if (siteCount <= 0 || siteCount > 64) {
++        throw std::runtime_error(
++            "This uint64_t cubic-lattice implementation requires 1 <= L^3 <= 64."
++        );
++    }
+     if (particleCount < 0 || particleCount > siteCount) {
+         return {};
+     }
+-    if (particleCount == 0) {
+-        return {Mask{0}};
+-    }
+ 
+-    const Mask limit = Mask{1} << siteCount;
+-    if (particleCount == siteCount) {
+-        return {limit - Mask{1}};
++    const long double estimatedSize = binomialEstimate(siteCount, particleCount);
++    if (estimatedSize > 1000000.0L) {
++        throw std::runtime_error(
++            "The explicit fixed-N basis would exceed one million states. "
++            "For a 4x4x4 lattice, use N <= 4 with this implementation."
++        );
+     }
+ 
+     std::vector<Mask> basis;
+-    Mask state = (Mask{1} << particleCount) - Mask{1};
+-
+-    while (state < limit) {
+-        basis.push_back(state);
+-        const Mask smallest = state & (~state + Mask{1});
+-        const Mask ripple = state + smallest;
+-        const Mask ones = ((state ^ ripple) >> 2) / smallest;
+-        state = ripple | ones;
+-    }
+-
++    basis.reserve(static_cast<std::size_t>(estimatedSize));
++    appendFixedParticleStates(siteCount, 0, particleCount, Mask{0}, basis);
+     return basis;
+ }
+ 
+ std::vector<double> makeHarmonicPotential(const QmcParameters& params) {
+     const int L = params.latticeSize;
+-    const int siteCount = L * L;
++    const int siteCount = L * L * L;
+     std::vector<double> potential(siteCount, 0.0);
+ 
+     if (!params.harmonicTrap) {
+@@ -327,14 +366,20 @@
+     const double centerY = std::isnan(params.trapCenterY)
+         ? 0.5 * static_cast<double>(L - 1)
+         : params.trapCenterY;
++    const double centerZ = std::isnan(params.trapCenterZ)
++        ? 0.5 * static_cast<double>(L - 1)
++        : params.trapCenterZ;
+ 
+-    for (int y = 0; y < L; ++y) {
+-        for (int x = 0; x < L; ++x) {
+-            const int site = y * L + x;
+-            const double dx = (static_cast<double>(x) - centerX) * params.latticeSpacing;
+-            const double dy = (static_cast<double>(y) - centerY) * params.latticeSpacing;
+-            potential[site] = 0.5 * params.mass * params.omega * params.omega
+-                * (dx * dx + dy * dy);
++    for (int z = 0; z < L; ++z) {
++        for (int y = 0; y < L; ++y) {
++            for (int x = 0; x < L; ++x) {
++                const int site = x + L * (y + L * z);
++                const double dx = (static_cast<double>(x) - centerX) * params.latticeSpacing;
++                const double dy = (static_cast<double>(y) - centerY) * params.latticeSpacing;
++                const double dz = (static_cast<double>(z) - centerZ) * params.latticeSpacing;
++                potential[site] = 0.5 * params.mass * params.omega * params.omega
++                    * (dx * dx + dy * dy + dz * dz);
++            }
+         }
+     }
+ 
+@@ -1146,8 +1191,8 @@
+         throw std::runtime_error("measureEvery must be positive.");
+     }
+ 
+-    const int siteCount = params.latticeSize * params.latticeSize;
+-    const std::vector<Bond> bonds = makeSquareLatticeBonds(
++    const int siteCount = params.latticeSize * params.latticeSize * params.latticeSize;
++    const std::vector<Bond> bonds = makeCubicLatticeBonds(
+         params.latticeSize,
+         params.boundary
+     );
+@@ -1483,7 +1528,7 @@
+ 
+     QmcResult combined = results[0];
+     const int chains = static_cast<int>(results.size());
+-    const int siteCount = combined.latticeSize * combined.latticeSize;
++    const int siteCount = combined.latticeSize * combined.latticeSize * combined.latticeSize;
+ 
+     combined.averageActive = 0.0;
+     combined.averageDiagonal = 0.0;
+@@ -1638,11 +1683,16 @@
+ 
+ void printOccupationGrid(const QmcResult& result) {
+     const int L = result.latticeSize;
+-    std::cout << "\nSite occupation grid <n_i>:\n";
++    std::cout << "\nSite occupation slices <n_i> (one x-y plane per z):\n";
+     std::cout << std::fixed << std::setprecision(6);
+-    for (int y = L - 1; y >= 0; --y) {
+-        for (int x = 0; x < L; ++x) {
+-            std::cout << std::setw(11) << result.occupations[y * L + x];
++    for (int z = L - 1; z >= 0; --z) {
++        std::cout << "z = " << z << "\n";
++        for (int y = L - 1; y >= 0; --y) {
++            for (int x = 0; x < L; ++x) {
++                const int site = x + L * (y + L * z);
++                std::cout << std::setw(11) << result.occupations[site];
++            }
++            std::cout << '\n';
+         }
+         std::cout << '\n';
+     }
+@@ -1661,7 +1711,7 @@
+         throw std::runtime_error("Could not open CSV output: " + filename);
+     }
+ 
+-    out << "site,x,y,physical_x,physical_y,potential,occupation,random_particle_probability,chain_count,total_measurements\n";
++    out << "site,x,y,z,physical_x,physical_y,physical_z,potential,occupation,random_particle_probability,chain_count,total_measurements\n";
+     out << std::setprecision(12);
+     const int L = result.latticeSize;
+     const double centerX = std::isnan(params.trapCenterX)
+@@ -1670,20 +1720,25 @@
+     const double centerY = std::isnan(params.trapCenterY)
+         ? 0.5 * static_cast<double>(L - 1)
+         : params.trapCenterY;
++    const double centerZ = std::isnan(params.trapCenterZ)
++        ? 0.5 * static_cast<double>(L - 1)
++        : params.trapCenterZ;
+ 
+-    for (int y = 0; y < L; ++y) {
+-        for (int x = 0; x < L; ++x) {
+-            const int site = y * L + x;
+-            const double physicalX = (static_cast<double>(x) - centerX) * params.latticeSpacing;
+-            const double physicalY = (static_cast<double>(y) - centerY) * params.latticeSpacing;
+-            out << site << ',' << x << ',' << y << ','
+-                << physicalX << ',' << physicalY << ','
+-                << result.onsitePotential[site] << ','
+-                << result.occupations[site] << ','
+-                << result.occupations[site] / static_cast<double>(result.particleCount) << ','
+-                << result.chainCount << ','
+-                << result.measurementCount
+-                << '\n';
++    for (int z = 0; z < L; ++z) {
++        for (int y = 0; y < L; ++y) {
++            for (int x = 0; x < L; ++x) {
++                const int site = x + L * (y + L * z);
++                const double physicalX = (static_cast<double>(x) - centerX) * params.latticeSpacing;
++                const double physicalY = (static_cast<double>(y) - centerY) * params.latticeSpacing;
++                const double physicalZ = (static_cast<double>(z) - centerZ) * params.latticeSpacing;
++                out << site << ',' << x << ',' << y << ',' << z << ','
++                    << physicalX << ',' << physicalY << ',' << physicalZ << ','
++                    << result.onsitePotential[site] << ','
++                    << result.occupations[site] << ','
++                    << result.occupations[site] / static_cast<double>(result.particleCount) << ','
++                    << result.chainCount << ','
++                    << result.measurementCount << '\n';
++            }
+         }
+     }
+ }
+@@ -1704,21 +1759,21 @@
+ <head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+-<title>QMC 3D lattice occupation map</title>
++<title>QMC cubic lattice occupation map</title>
+ <script src="plotly.min.js"></script>
+ <style>
+ html,body{width:100%;height:100%;margin:0;background:#000;color:#eee;overflow:hidden;font-family:Inter,Segoe UI,Arial,sans-serif}
+ #plot{position:absolute;inset:0}
+-#panel{position:absolute;left:18px;top:16px;z-index:10;max-width:430px;padding:14px 16px;border:1px solid rgba(255,190,40,.28);border-radius:12px;background:rgba(0,0,0,.72);box-shadow:0 0 28px rgba(255,120,0,.13);backdrop-filter:blur(8px);pointer-events:none}
+-#panel h1{font-size:18px;margin:0 0 7px;color:#ffd166;text-shadow:0 0 12px rgba(255,197,66,.5)}
+-#panel p{font-size:12px;line-height:1.45;margin:3px 0;color:#bbb}
+-#panel b{color:#fff}
++#panel{position:absolute;left:18px;top:16px;z-index:10;width:min(440px,calc(100vw - 70px));padding:14px 16px;border:1px solid rgba(255,190,40,.3);border-radius:12px;background:rgba(0,0,0,.74);box-shadow:0 0 34px rgba(255,120,0,.16);backdrop-filter:blur(8px)}
++#panel h1{font-size:18px;margin:0 0 7px;color:#ffd166;text-shadow:0 0 14px rgba(255,197,66,.6)}
++#panel p{font-size:12px;line-height:1.5;margin:4px 0;color:#bbb}
++#panel b,#selected{color:#fff}
+ #error{display:none;position:absolute;inset:0;place-items:center;text-align:center;padding:40px;color:#ffbd59;background:#000;z-index:20}
+ </style>
+ </head>
+ <body>
+ <div id="plot"></div>
+-<div id="panel"><h1>QMC lattice occupation</h1><p><b>Drag</b> to rotate, <b>scroll</b> to zoom, and hover over a site for its values.</p><p id="meta"></p></div>
++<div id="panel"><h1>QMC 3D cubic occupation</h1><p><b>Drag</b> to orbit, <b>scroll</b> to zoom, hover for values, and <b>click a site</b> to pin its details.</p><p id="meta"></p><p id="selected">No site selected.</p></div>
+ <div id="error">Plotly could not be loaded. Keep <b>plotly.min.js</b> in the same folder as this HTML file.</div>
+ <script>
+ )HTML";
+@@ -1750,63 +1805,54 @@
+ if(typeof Plotly==='undefined'){
+   document.getElementById('error').style.display='grid';
+ }else{
+-const xs=[],ys=[],zs=[],hover=[];
+-const zGrid=[],xGrid=[],yGrid=[];
+-for(let y=0;y<L;y++){
+-  const zr=[],xr=[],yr=[];
+-  for(let x=0;x<L;x++){
+-    const site=y*L+x, p=occupation[site];
+-    xs.push(x);ys.push(y);zs.push(p);
+-    hover.push(`site ${site}<br>x=${x}, y=${y}<br>&lt;n<sub>i</sub>&gt;=${p.toFixed(7)}<br>single-particle p=${(p/N).toFixed(7)}<br>V=${potential[site].toFixed(7)}`);
+-    zr.push(p);xr.push(x);yr.push(y);
+-  }
+-  zGrid.push(zr);xGrid.push(xr);yGrid.push(yr);
+-}
+-const minZ=Math.min(...zs),maxZ=Math.max(...zs);
+-function infernoColor(t){
+-  t=Math.max(0,Math.min(1,t));
+-  const stops=[[0,[0,0,4]],[.2,[65,10,104]],[.4,[147,38,103]],[.6,[221,81,58]],[.8,[252,166,54]],[1,[252,255,164]]];
+-  for(let i=1;i<stops.length;i++) if(t<=stops[i][0]){
+-    const a=stops[i-1],b=stops[i],u=(t-a[0])/(b[0]-a[0]);
+-    const c=a[1].map((v,k)=>Math.round(v+u*(b[1][k]-v)));
+-    return `rgb(${c[0]},${c[1]},${c[2]})`;
+-  }
+-  return 'rgb(252,255,164)';
+-}
+-const traces=[];
+-// Faint lattice floor.
+-for(let k=0;k<L;k++){
+-  traces.push({type:'scatter3d',mode:'lines',x:[0,L-1],y:[k,k],z:[0,0],line:{color:'rgba(255,255,255,.11)',width:2},hoverinfo:'skip',showlegend:false});
+-  traces.push({type:'scatter3d',mode:'lines',x:[k,k],y:[0,L-1],z:[0,0],line:{color:'rgba(255,255,255,.11)',width:2},hoverinfo:'skip',showlegend:false});
+-}
+-// Probability stems, colored site by site.
++const xs=[],ys=[],zs=[],values=[],sizes=[],hover=[],siteIds=[];
++const minP=Math.min(...occupation),maxP=Math.max(...occupation);
++const span=Math.max(1e-15,maxP-minP);
+ for(let site=0;site<occupation.length;site++){
+-  const x=site%L,y=Math.floor(site/L),p=occupation[site];
+-  const t=(p-minZ)/Math.max(1e-15,maxZ-minZ);
+-  traces.push({type:'scatter3d',mode:'lines',x:[x,x],y:[y,y],z:[0,p],line:{color:infernoColor(t),width:10},hoverinfo:'skip',showlegend:false});
+-}
+-traces.push({
+-  type:'surface',x:xGrid,y:yGrid,z:zGrid,surfacecolor:zGrid,colorscale:'Inferno',cmin:minZ,cmax:maxZ,
+-  opacity:.58,showscale:false,hoverinfo:'skip',contours:{z:{show:true,usecolormap:true,highlightcolor:'#ffe36e',project:{z:true}}}
+-});
+-// Glow halo and sharp interactive core.
+-traces.push({type:'scatter3d',mode:'markers',x:xs,y:ys,z:zs,hoverinfo:'skip',showlegend:false,
+-  marker:{size:28,color:zs,colorscale:'Inferno',cmin:minZ,cmax:maxZ,opacity:.16,line:{width:0}}});
+-traces.push({type:'scatter3d',mode:'markers',x:xs,y:ys,z:zs,text:hover,hovertemplate:'%{text}<extra></extra>',showlegend:false,
+-  marker:{size:10,color:zs,colorscale:'Inferno',cmin:minZ,cmax:maxZ,opacity:1,line:{color:'rgba(255,240,160,.72)',width:1.2},
+-  colorbar:{title:{text:'&lt;n<sub>i</sub>&gt;',font:{color:'#eee'}},tickfont:{color:'#ddd'},thickness:14,len:.64,outlinecolor:'#555'}}});
+-const axis={backgroundcolor:'#000',gridcolor:'rgba(255,255,255,.09)',zerolinecolor:'rgba(255,255,255,.18)',tickfont:{color:'#aaa'},titlefont:{color:'#ddd'},showbackground:true};
+-const layout={
+-  paper_bgcolor:'#000',plot_bgcolor:'#000',margin:{l:0,r:0,t:0,b:0},showlegend:false,
+-  scene:{bgcolor:'#000',xaxis:{...axis,title:'x site',dtick:1},yaxis:{...axis,title:'y site',dtick:1},zaxis:{...axis,title:'occupation probability',range:[0,maxZ*1.28]},
+-    aspectmode:'manual',aspectratio:{x:1,y:1,z:.72},camera:{eye:{x:1.45,y:1.55,z:1.2}}},
+-  updatemenus:[{type:'buttons',direction:'left',x:.99,y:.98,xanchor:'right',yanchor:'top',bgcolor:'rgba(20,20,20,.8)',bordercolor:'#6d4c1f',font:{color:'#ffd166'},buttons:[
+-    {label:'Reset view',method:'relayout',args:[{'scene.camera':{eye:{x:1.45,y:1.55,z:1.2}}}]},
+-    {label:'Top view',method:'relayout',args:[{'scene.camera':{eye:{x:0,y:0,z:2.4},up:{x:0,y:1,z:0}}}]}
+-  ]}]
++  const x=site%L;
++  const y=Math.floor(site/L)%L;
++  const z=Math.floor(site/(L*L));
++  const p=occupation[site];
++  const u=(p-minP)/span;
++  xs.push(x);ys.push(y);zs.push(z);values.push(p);sizes.push(8+18*Math.pow(u,.72));siteIds.push(site);
++  hover.push(`site ${site}<br>(x,y,z)=(${x},${y},${z})<br>&lt;n<sub>i</sub>&gt;=${p.toFixed(8)}<br>single-particle p=${(p/N).toFixed(8)}<br>V=${potential[site].toFixed(8)}`);
++}
++const edgeX=[],edgeY=[],edgeZ=[];
++function edge(a,b){edgeX.push(a[0],b[0],null);edgeY.push(a[1],b[1],null);edgeZ.push(a[2],b[2],null);}
++for(let z=0;z<L;z++)for(let y=0;y<L;y++)for(let x=0;x<L;x++){
++  if(x+1<L)edge([x,y,z],[x+1,y,z]);
++  if(y+1<L)edge([x,y,z],[x,y+1,z]);
++  if(z+1<L)edge([x,y,z],[x,y,z+1]);
++}
++const traces=[
++ {type:'scatter3d',mode:'lines',x:edgeX,y:edgeY,z:edgeZ,hoverinfo:'skip',showlegend:false,line:{color:'rgba(255,255,255,.10)',width:2}},
++ {type:'scatter3d',mode:'markers',x:xs,y:ys,z:zs,hoverinfo:'skip',showlegend:false,
++  marker:{size:sizes.map(v=>v*2.25),color:values,colorscale:'Inferno',cmin:minP,cmax:maxP,opacity:.13,line:{width:0}}},
++ {type:'scatter3d',mode:'markers',x:xs,y:ys,z:zs,text:hover,customdata:siteIds,hovertemplate:'%{text}<extra></extra>',showlegend:false,
++  marker:{size:sizes,color:values,colorscale:'Inferno',cmin:minP,cmax:maxP,opacity:1,line:{color:'rgba(255,235,145,.68)',width:1},
++  colorbar:{title:{text:'&lt;n<sub>i</sub>&gt;',font:{color:'#eee'}},tickfont:{color:'#ddd'},thickness:14,len:.62,outlinecolor:'#555'}}},
++ {type:'scatter3d',mode:'markers',x:[],y:[],z:[],hoverinfo:'skip',showlegend:false,
++  marker:{size:34,color:'#fff3a1',opacity:.34,line:{color:'#fff6bd',width:2}}}
++];
++const axis={backgroundcolor:'#000',gridcolor:'rgba(255,255,255,.08)',zerolinecolor:'rgba(255,255,255,.16)',tickfont:{color:'#aaa'},titlefont:{color:'#ddd'},showbackground:true,dtick:1,range:[-.45,L-.55]};
++const iso={eye:{x:1.55,y:1.55,z:1.45},up:{x:0,y:0,z:1}};
++const layout={paper_bgcolor:'#000',plot_bgcolor:'#000',margin:{l:0,r:0,t:0,b:0},showlegend:false,
++ scene:{bgcolor:'#000',xaxis:{...axis,title:'x'},yaxis:{...axis,title:'y'},zaxis:{...axis,title:'z'},aspectmode:'cube',camera:iso},
++ updatemenus:[{type:'buttons',direction:'left',x:.99,y:.98,xanchor:'right',yanchor:'top',bgcolor:'rgba(20,20,20,.84)',bordercolor:'#6d4c1f',font:{color:'#ffd166'},buttons:[
++  {label:'Isometric',method:'relayout',args:[{'scene.camera':iso}]},
++  {label:'Top',method:'relayout',args:[{'scene.camera':{eye:{x:0,y:0,z:2.6},up:{x:0,y:1,z:0}}}]},
++  {label:'Front',method:'relayout',args:[{'scene.camera':{eye:{x:0,y:2.6,z:0},up:{x:0,y:0,z:1}}}]},
++  {label:'Side',method:'relayout',args:[{'scene.camera':{eye:{x:2.6,y:0,z:0},up:{x:0,y:0,z:1}}}]}
++ ]}]
+ };
+ Plotly.newPlot('plot',traces,layout,{responsive:true,displaylogo:false,scrollZoom:true});
+-document.getElementById('meta').innerHTML=`L=${L}, N=${N}, β=${beta}, E=${energy.toFixed(8)}<br>${model}, ${boundary} boundaries, ${trap?'harmonic trap':'no external potential'}, a=${spacing}<br><b>${chains} chain${chains===1?'':'s'}</b>, ${measurements.toLocaleString()} pooled measurements`;
++document.getElementById('meta').innerHTML=`${L}×${L}×${L} (${L**3} sites), N=${N}, β=${beta}, E=${energy.toFixed(8)}<br>${model}, ${boundary} boundaries, ${trap?'3D harmonic trap':'no external potential'}, a=${spacing}<br><b>${chains} chain${chains===1?'':'s'}</b>, ${measurements.toLocaleString()} pooled measurements`;
++document.getElementById('plot').on('plotly_click',ev=>{
++  const pt=ev.points?.[0]; if(!pt || pt.customdata===undefined)return;
++  const site=Number(pt.customdata),x=site%L,y=Math.floor(site/L)%L,z=Math.floor(site/(L*L));
++  Plotly.restyle('plot',{x:[[x]],y:[[y]],z:[[z]]},[3]);
++  document.getElementById('selected').innerHTML=`Selected <b>site ${site}</b> at (${x}, ${y}, ${z})<br>&lt;n<sub>i</sub>&gt;=${occupation[site].toFixed(9)}, single-particle p=${(occupation[site]/N).toFixed(9)}, V=${potential[site].toFixed(9)}`;
++});
+ }
+ </script>
+ </body>
+@@ -1841,31 +1887,32 @@
+ }
+ 
+ void printHelp() {
+-    std::cout << "Hard-core boson / spinless fermion QMC with 3D occupation map\n\n";
++    std::cout << "Hard-core boson / spinless fermion QMC on a 3D cubic lattice\n\n";
+     std::cout << "Compile:\n";
+-    std::cout << "  g++ -std=c++17 -O3 -fopenmp qmc_sho_3d.cpp -o qmc_sho_3d\n\n";
++    std::cout << "  g++ -std=c++17 -O3 -fopenmp qmc_sho_cubic_3d.cpp -o qmc_sho_cubic_3d\n\n";
+     std::cout << "Example:\n";
+-    std::cout << "  ./qmc_sho_3d --model boson --boundary periodic --L 4 --N 2 --trap "
+-                 "--mass 1 --omega 0.5 --a 1 --chains 12 --output periodic_sho\n\n";
++    std::cout << "  ./qmc_sho_cubic_3d --model boson --boundary periodic --L 4 --N 2 --trap "
++                 "--mass 1 --omega 0.5 --a 1 --M 800 --chains 12 --output periodic_sho_cubic\n\n";
+     std::cout << "Core options:\n";
+     std::cout << "  --model <boson|fermion>       particle model, default boson\n";
+     std::cout << "  --boundary <periodic|open>    default periodic\n";
+     std::cout << "  --N <int>                     fixed particle number\n";
+-    std::cout << "  --L <int>                     square lattice side length\n";
++    std::cout << "  --L <int>                     cubic lattice side length (L=4 gives 64 sites)\n";
+     std::cout << "  --beta <float>                inverse temperature\n";
+     std::cout << "  --t <float>                   hopping energy\n";
+-    std::cout << "  --M <int>                     SSE operator-string cutoff\n";
++    std::cout << "  --M <int>                     SSE operator-string cutoff, default 800\n";
+     std::cout << "  --therm <int>                 thermalization sweeps\n";
+     std::cout << "  --sweeps <int>                measurement sweeps\n";
+     std::cout << "  --measure_every <int>         measurement interval\n";
+     std::cout << "  --chains <int>                independent OpenMP chains\n\n";
+     std::cout << "Harmonic potential:\n";
+-    std::cout << "  --trap                        enable V=1/2 m omega^2 r^2\n";
++    std::cout << "  --trap                        enable V=1/2 m omega^2 (x^2+y^2+z^2)\n";
+     std::cout << "  --mass <float>                default 1\n";
+     std::cout << "  --omega <float>               default 0.5\n";
+     std::cout << "  --a <float>                   spatial lattice spacing\n";
+     std::cout << "  --center_x <float>            default (L-1)/2\n";
+     std::cout << "  --center_y <float>            default (L-1)/2\n";
++    std::cout << "  --center_z <float>            default (L-1)/2\n";
+     std::cout << "  --shift_margin <float>        positive SSE shift in units of t, default 1\n\n";
+     std::cout << "Map output:\n";
+     std::cout << "  --output <prefix>             one post-aggregation HTML/CSV prefix\n";
+@@ -1907,6 +1954,7 @@
+     params.latticeSpacing = parseDoubleArg(args, "--a", params.latticeSpacing);
+     params.trapCenterX = parseDoubleArg(args, "--center_x", params.trapCenterX);
+     params.trapCenterY = parseDoubleArg(args, "--center_y", params.trapCenterY);
++    params.trapCenterZ = parseDoubleArg(args, "--center_z", params.trapCenterZ);
+     params.potentialShiftMargin = parseDoubleArg(
+         args,
+         "--shift_margin",
+@@ -1924,16 +1972,17 @@
+ 
+     std::vector<int> particleNumbers;
+     if (hasFlag(args, "--all")) {
+-        particleNumbers = {2, 3, 4, 5, 6, 7, 8};
+-    } else {
+-        particleNumbers = {params.particleCount};
++        throw std::runtime_error(
++            "--all is disabled for the 64-site cubic lattice because the explicit fixed-N basis grows combinatorially. Run N=2, N=3, or N=4 separately."
++        );
+     }
++    particleNumbers = {params.particleCount};
+ 
+ 
+-    std::cout << "Stochastic worm QMC sampler\n";
++    std::cout << "Stochastic worm QMC sampler on an L x L x L cubic lattice\n";
+     std::cout << "model=" << modelName(params.model)
+               << ", boundary=" << boundaryName(params.boundary)
+-              << ", L=" << params.latticeSize
++              << ", lattice=" << params.latticeSize << "x" << params.latticeSize << "x" << params.latticeSize
+               << ", beta=" << params.beta
+               << ", t=" << params.hoppingT
+               << ", trap=" << (params.harmonicTrap ? "sho" : "off")
+@@ -1974,16 +2023,7 @@
+             result = runParallelChains(params, chains);
+         }
+ 
+-        double exactValue = params.harmonicTrap
+-            ? std::numeric_limits<double>::quiet_NaN()
+-            : referenceEnergyValue(
+-                params.model,
+-                params.boundary,
+-                params.latticeSize,
+-                params.beta,
+-                params.hoppingT,
+-                particleCount
+-            );
++        double exactValue = std::numeric_limits<double>::quiet_NaN();
+ 
+         printResultRow(result, exactValue);
+         printOccupationGrid(result);

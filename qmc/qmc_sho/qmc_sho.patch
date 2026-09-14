@@ -1,0 +1,594 @@
+--- qmc.cpp
++++ qmc_sho.cpp
+@@ -15,6 +15,8 @@
+ #include <utility>
+ #include <vector>
+ 
++#include "harmonic_potential.hpp"
++
+ using Mask = unsigned int;
+ using Bond = std::pair<int, int>;
+ 
+@@ -34,11 +36,14 @@
+ enum class OperatorKind {
+     Identity,
+     Diagonal,
+-    Hopping
++    Hopping,
++    Potential
+ };
+ 
+ struct BondOperator {
+     OperatorKind kind = OperatorKind::Identity;
++
++    // Bond index for Diagonal/Hopping, site index for Potential.
+     int bond = -1;
+ };
+ 
+@@ -56,6 +61,7 @@
+     BoundaryCondition boundary = BoundaryCondition::Periodic;
+     unsigned int seed = 12345;
+     bool showProgress = true;
++    sho::Parameters harmonicTrap;
+ 
+     // Used only by parallel runs so the terminal can show per-chain progress.
+     std::atomic<long long>* sharedChainProgress = nullptr;
+@@ -87,8 +93,10 @@
+     double activeSum = 0.0;
+     double diagonalSum = 0.0;
+     double hoppingSum = 0.0;
++    double potentialOperatorSum = 0.0;
+     double signSum = 0.0;
+     double signedActiveSum = 0.0;
++    double signedPotentialEnergySum = 0.0;
+ };
+ 
+ struct QmcResult {
+@@ -101,6 +109,8 @@
+     double averageActive = 0.0;
+     double averageDiagonal = 0.0;
+     double averageHopping = 0.0;
++    double averagePotentialOperators = 0.0;
++    double averagePotentialEnergy = 0.0;
+     double averageSign = 1.0;
+     double signError = 0.0;
+     double energy = 0.0;
+@@ -378,8 +388,28 @@
+     Mask state,
+     const BondOperator& op,
+     const std::vector<Bond>& bonds,
+-    ParticleModel model
++    double hoppingT,
++    ParticleModel model,
++    const sho::HarmonicPotential& trap
+ ) {
++    if (op.kind == OperatorKind::Potential) {
++        LocalMatrixElement out;
++        const double shiftedWeight = trap.shiftedMatrixElement(op.bond, occupied(state, op.bond));
++
++        if (!trap.enabled || shiftedWeight <= 0.0) {
++            return out;
++        }
++
++        out.valid = true;
++        out.newState = state;
++
++        // The global SSE factor remains (beta * t)^n, so divide the
++        // potential's energy-valued matrix element by t here.
++        out.absWeight = shiftedWeight / hoppingT;
++        out.sign = 1;
++        return out;
++    }
++
+     if (model == ParticleModel::HardcoreBoson) {
+         return applyHardcoreBosonOperator(state, op, bonds);
+     }
+@@ -393,7 +423,8 @@
+     const std::vector<Bond>& bonds,
+     double beta,
+     double hoppingT,
+-    ParticleModel model
++    ParticleModel model,
++    const sho::HarmonicPotential& trap
+ ) {
+     int stringLength = static_cast<int>(operators.size());
+     int activeCount = 0;
+@@ -408,7 +439,14 @@
+         }
+ 
+         activeCount += 1;
+-        LocalMatrixElement elem = applyModelOperator(state, op, bonds, model);
++        LocalMatrixElement elem = applyModelOperator(
++            state,
++            op,
++            bonds,
++            hoppingT,
++            model,
++            trap
++        );
+ 
+         if (!elem.valid || elem.absWeight <= 0.0) {
+             return SignedLogWeight{false, negativeInfinity, 1, activeCount};
+@@ -432,6 +470,38 @@
+     return SignedLogWeight{true, logAbsWeight, totalSign, activeCount};
+ }
+ 
++double imaginaryTimeAveragePotential(
++    Mask initialState,
++    const std::vector<BondOperator>& operators,
++    const std::vector<Bond>& bonds,
++    const sho::HarmonicPotential& trap
++) {
++    if (!trap.enabled || operators.empty()) {
++        return 0.0;
++    }
++
++    Mask state = initialState;
++    double currentPotential = trap.statePotentialEnergy(state);
++    double potentialTotal = 0.0;
++
++    for (const BondOperator& op : operators) {
++        potentialTotal += currentPotential;
++
++        if (op.kind == OperatorKind::Hopping) {
++            const int i = bonds[op.bond].first;
++            const int j = bonds[op.bond].second;
++            const bool particleMovesFromI = occupied(state, i);
++
++            currentPotential += particleMovesFromI
++                ? trap.valueAt(j) - trap.valueAt(i)
++                : trap.valueAt(i) - trap.valueAt(j);
++            state = flipTwoSites(state, i, j);
++        }
++    }
++
++    return potentialTotal / static_cast<double>(operators.size());
++}
++
+ bool acceptFromLogRatio(double logRatio, std::mt19937& rng) {
+     if (std::isnan(logRatio)) {
+         return false;
+@@ -452,6 +522,7 @@
+     double beta,
+     double hoppingT,
+     ParticleModel model,
++    const sho::HarmonicPotential& trap,
+     SignedLogWeight& currentWeight,
+     AcceptanceCounter& counter,
+     std::mt19937& rng
+@@ -460,9 +531,11 @@
+ 
+     int stringLength = static_cast<int>(operators.size());
+     int bondCount = static_cast<int>(bonds.size());
++    int siteCount = trap.enabled ? static_cast<int>(trap.sitePotential.size()) : 0;
++    int diagonalChoiceCount = bondCount + siteCount;
+ 
+     std::uniform_int_distribution<int> positionDist(0, stringLength - 1);
+-    std::uniform_int_distribution<int> bondDist(0, bondCount - 1);
++    std::uniform_int_distribution<int> diagonalChoiceDist(0, diagonalChoiceCount - 1);
+ 
+     int position = positionDist(rng);
+     BondOperator oldOperator = operators[position];
+@@ -470,13 +543,20 @@
+     double proposalLogRatio = 0.0;
+ 
+     if (oldOperator.kind == OperatorKind::Identity) {
+-        newOperator.kind = OperatorKind::Diagonal;
+-        newOperator.bond = bondDist(rng);
+-        proposalLogRatio = std::log(static_cast<double>(bondCount));
+-    } else if (oldOperator.kind == OperatorKind::Diagonal) {
++        const int choice = diagonalChoiceDist(rng);
++        if (choice < bondCount) {
++            newOperator.kind = OperatorKind::Diagonal;
++            newOperator.bond = choice;
++        } else {
++            newOperator.kind = OperatorKind::Potential;
++            newOperator.bond = choice - bondCount;
++        }
++        proposalLogRatio = std::log(static_cast<double>(diagonalChoiceCount));
++    } else if (oldOperator.kind == OperatorKind::Diagonal ||
++               oldOperator.kind == OperatorKind::Potential) {
+         newOperator.kind = OperatorKind::Identity;
+         newOperator.bond = -1;
+-        proposalLogRatio = -std::log(static_cast<double>(bondCount));
++        proposalLogRatio = -std::log(static_cast<double>(diagonalChoiceCount));
+     } else {
+         return false;
+     }
+@@ -489,7 +569,8 @@
+         bonds,
+         beta,
+         hoppingT,
+-        model
++        model,
++        trap
+     );
+ 
+     double logRatio = newWeight.logAbsWeight - currentWeight.logAbsWeight + proposalLogRatio;
+@@ -511,6 +592,7 @@
+     double beta,
+     double hoppingT,
+     ParticleModel model,
++    const sho::HarmonicPotential& trap,
+     SignedLogWeight& currentWeight,
+     AcceptanceCounter& counter,
+     std::mt19937& rng
+@@ -543,7 +625,8 @@
+         bonds,
+         beta,
+         hoppingT,
+-        model
++        model,
++        trap
+     );
+ 
+     double logRatio = newWeight.logAbsWeight - currentWeight.logAbsWeight;
+@@ -565,6 +648,7 @@
+     double beta,
+     double hoppingT,
+     ParticleModel model,
++    const sho::HarmonicPotential& trap,
+     SignedLogWeight& currentWeight,
+     AcceptanceCounter& counter,
+     std::mt19937& rng
+@@ -581,7 +665,8 @@
+ 
+     for (int attempt = 0; attempt < 10 * wormLength && positionCount < wormLength; ++attempt) {
+         int position = positionDist(rng);
+-        if (operators[position].kind != OperatorKind::Identity) {
++        if (operators[position].kind == OperatorKind::Diagonal ||
++            operators[position].kind == OperatorKind::Hopping) {
+             positions[positionCount] = position;
+             positionCount++;
+         }
+@@ -610,7 +695,8 @@
+         bonds,
+         beta,
+         hoppingT,
+-        model
++        model,
++        trap
+     );
+ 
+     double logRatio = newWeight.logAbsWeight - currentWeight.logAbsWeight;
+@@ -634,6 +720,7 @@
+     double beta,
+     double hoppingT,
+     ParticleModel model,
++    const sho::HarmonicPotential& trap,
+     SignedLogWeight& currentWeight,
+     AcceptanceCounter& counter,
+     std::mt19937& rng
+@@ -660,7 +747,8 @@
+         bonds,
+         beta,
+         hoppingT,
+-        model
++        model,
++        trap
+     );
+ 
+     double logRatio = newWeight.logAbsWeight - currentWeight.logAbsWeight;
+@@ -684,6 +772,7 @@
+     double beta,
+     double hoppingT,
+     ParticleModel model,
++    const sho::HarmonicPotential& trap,
+     SignedLogWeight& currentWeight,
+     AcceptanceCounter& counter,
+     std::mt19937& rng
+@@ -704,7 +793,8 @@
+         bonds,
+         beta,
+         hoppingT,
+-        model
++        model,
++        trap
+     );
+ 
+     double logRatio = newWeight.logAbsWeight - currentWeight.logAbsWeight;
+@@ -873,6 +963,8 @@
+                   << results[chain].energy
+                   << ", err = " << results[chain].energyError
+                   << ", <Nop> = " << results[chain].averageActive
++                  << ", <P> = " << results[chain].averagePotentialOperators
++                  << ", <V> = " << results[chain].averagePotentialEnergy
+                   << ", <sgn> = " << results[chain].averageSign
+                   << " +/- " << results[chain].signError
+                   << ", accD = " << results[chain].diagonalAcceptance
+@@ -896,6 +988,10 @@
+     }
+ 
+     int siteCount = params.latticeSize * params.latticeSize;
++    sho::HarmonicPotential trap = sho::makeHarmonicPotential(
++        params.latticeSize,
++        params.harmonicTrap
++    );
+     std::vector<Bond> bonds = makeSquareLatticeBonds(params.latticeSize, params.boundary);
+     std::vector<Mask> basis = makeFixedParticleBasis(siteCount, params.particleCount);
+ 
+@@ -915,7 +1011,8 @@
+         bonds,
+         params.beta,
+         params.hoppingT,
+-        params.model
++        params.model,
++        trap
+     );
+ 
+     if (!currentWeight.valid) {
+@@ -941,8 +1038,10 @@
+     double activeTotal = 0.0;
+     double diagonalTotal = 0.0;
+     double hoppingTotal = 0.0;
++    double potentialOperatorTotal = 0.0;
+     double signTotal = 0.0;
+     double signedActiveTotal = 0.0;
++    double signedPotentialEnergyTotal = 0.0;
+ 
+     auto startTime = std::chrono::steady_clock::now();
+ 
+@@ -974,6 +1073,7 @@
+                 params.beta,
+                 params.hoppingT,
+                 params.model,
++                trap,
+                 currentWeight,
+                 diagonalCounter,
+                 rng
+@@ -988,6 +1088,7 @@
+                 params.beta,
+                 params.hoppingT,
+                 params.model,
++                trap,
+                 currentWeight,
+                 wormCounter,
+                 rng
+@@ -1002,6 +1103,7 @@
+                 params.beta,
+                 params.hoppingT,
+                 params.model,
++                trap,
+                 currentWeight,
+                 stateCounter,
+                 rng
+@@ -1017,6 +1119,7 @@
+                 params.beta,
+                 params.hoppingT,
+                 params.model,
++                trap,
+                 currentWeight,
+                 stateCounter,
+                 rng
+@@ -1028,31 +1131,45 @@
+             int active = currentWeight.activeCount;
+             int diagonal = 0;
+             int hopping = 0;
++            int potentialOperators = 0;
+ 
+             for (const BondOperator& op : operators) {
+                 if (op.kind == OperatorKind::Diagonal) {
+                     diagonal += 1;
+                 } else if (op.kind == OperatorKind::Hopping) {
+                     hopping += 1;
++                } else if (op.kind == OperatorKind::Potential) {
++                    potentialOperators += 1;
+                 }
+             }
+ 
+             double sign = static_cast<double>(currentWeight.sign);
+             double signedActive = sign * static_cast<double>(active);
++            double potentialEnergy = imaginaryTimeAveragePotential(
++                initialState,
++                operators,
++                bonds,
++                trap
++            );
++            double signedPotentialEnergy = sign * potentialEnergy;
+ 
+             activeTotal += active;
+             diagonalTotal += diagonal;
+             hoppingTotal += hopping;
++            potentialOperatorTotal += potentialOperators;
+             signTotal += sign;
+             signedActiveTotal += signedActive;
++            signedPotentialEnergyTotal += signedPotentialEnergy;
+ 
+             int blockIndex = measurementBlockIndex(measurementIndex, totalMeasurements, static_cast<int>(blocks.size()));
+             blocks[blockIndex].count += 1;
+             blocks[blockIndex].activeSum += active;
+             blocks[blockIndex].diagonalSum += diagonal;
+             blocks[blockIndex].hoppingSum += hopping;
++            blocks[blockIndex].potentialOperatorSum += potentialOperators;
+             blocks[blockIndex].signSum += sign;
+             blocks[blockIndex].signedActiveSum += signedActive;
++            blocks[blockIndex].signedPotentialEnergySum += signedPotentialEnergy;
+ 
+             if (active > static_cast<int>(0.85 * params.stringLength)) {
+                 cutoffHits += 1;
+@@ -1097,7 +1214,10 @@
+         if (std::abs(block.signSum) < 1e-14) {
+             continue;
+         }
+-        blockEnergies.push_back(-block.signedActiveSum / (params.beta * block.signSum));
++        blockEnergies.push_back(
++            -block.signedActiveSum / (params.beta * block.signSum)
++            + trap.totalShift
++        );
+     }
+ 
+     QmcResult result;
+@@ -1110,15 +1230,21 @@
+     result.averageActive = activeTotal / static_cast<double>(measurementIndex);
+     result.averageDiagonal = diagonalTotal / static_cast<double>(measurementIndex);
+     result.averageHopping = hoppingTotal / static_cast<double>(measurementIndex);
++    result.averagePotentialOperators =
++        potentialOperatorTotal / static_cast<double>(measurementIndex);
+     result.averageSign = signTotal / static_cast<double>(measurementIndex);
+     result.signError = standardError(blockSigns);
+ 
+     if (std::abs(signTotal) < 1e-14) {
+         result.energy = std::numeric_limits<double>::quiet_NaN();
+         result.energyError = std::numeric_limits<double>::quiet_NaN();
++        result.averagePotentialEnergy = std::numeric_limits<double>::quiet_NaN();
+     } else {
+-        result.energy = -signedActiveTotal / (params.beta * signTotal);
++        result.energy =
++            -signedActiveTotal / (params.beta * signTotal)
++            + trap.totalShift;
+         result.energyError = standardError(blockEnergies);
++        result.averagePotentialEnergy = signedPotentialEnergyTotal / signTotal;
+     }
+ 
+     result.cutoffHitFraction = static_cast<double>(cutoffHits) / static_cast<double>(measurementIndex);
+@@ -1146,6 +1272,8 @@
+     combined.averageActive = 0.0;
+     combined.averageDiagonal = 0.0;
+     combined.averageHopping = 0.0;
++    combined.averagePotentialOperators = 0.0;
++    combined.averagePotentialEnergy = 0.0;
+     combined.averageSign = 0.0;
+     combined.signError = 0.0;
+     combined.energy = 0.0;
+@@ -1163,6 +1291,8 @@
+         combined.averageActive += result.averageActive;
+         combined.averageDiagonal += result.averageDiagonal;
+         combined.averageHopping += result.averageHopping;
++        combined.averagePotentialOperators += result.averagePotentialOperators;
++        combined.averagePotentialEnergy += result.averagePotentialEnergy;
+         combined.averageSign += result.averageSign;
+         combined.energy += result.energy;
+         combined.diagonalAcceptance += result.diagonalAcceptance;
+@@ -1176,6 +1306,8 @@
+     combined.averageActive /= chains;
+     combined.averageDiagonal /= chains;
+     combined.averageHopping /= chains;
++    combined.averagePotentialOperators /= chains;
++    combined.averagePotentialEnergy /= chains;
+     combined.averageSign /= chains;
+     combined.energy /= chains;
+     combined.diagonalAcceptance /= chains;
+@@ -1250,6 +1382,8 @@
+               << std::setw(10) << result.averageActive
+               << std::setw(10) << result.averageDiagonal
+               << std::setw(10) << result.averageHopping
++              << std::setw(10) << result.averagePotentialOperators
++              << std::setw(12) << result.averagePotentialEnergy
+               << std::setw(10) << result.averageSign
+               << std::setw(10) << result.signError
+               << std::setw(10) << result.diagonalAcceptance
+@@ -1272,6 +1406,13 @@
+     std::cout << "  --L <int>                     square lattice side length, default 4\n";
+     std::cout << "  --beta <float>                inverse temperature/projection length\n";
+     std::cout << "  --t <float>                   hopping t, default 1\n";
++    std::cout << "  --trap                        enable the harmonic trap\n";
++    std::cout << "  --mass <float>                particle mass m, default 1\n";
++    std::cout << "  --omega <float>               trap angular frequency, default 1\n";
++    std::cout << "  --a <float>                   lattice spacing, default 1\n";
++    std::cout << "  --center_x <float>            trap center x, default (L-1)/2\n";
++    std::cout << "  --center_y <float>            trap center y, default (L-1)/2\n";
++    std::cout << "  --trap_shift <float>          positive SSE shift epsilon, default 1e-12\n";
+     std::cout << "  --M <int>                     SSE operator-string cutoff\n";
+     std::cout << "  --therm <int>                 thermalization sweeps\n";
+     std::cout << "  --sweeps <int>                measurement sweeps\n";
+@@ -1299,6 +1440,19 @@
+     params.particleCount = parseIntArg(args, "--N", params.particleCount);
+     params.beta = parseDoubleArg(args, "--beta", params.beta);
+     params.hoppingT = parseDoubleArg(args, "--t", params.hoppingT);
++    params.harmonicTrap.enabled = hasFlag(args, "--trap");
++    params.harmonicTrap.mass =
++        parseDoubleArg(args, "--mass", params.harmonicTrap.mass);
++    params.harmonicTrap.omega =
++        parseDoubleArg(args, "--omega", params.harmonicTrap.omega);
++    params.harmonicTrap.latticeSpacing =
++        parseDoubleArg(args, "--a", params.harmonicTrap.latticeSpacing);
++    params.harmonicTrap.centerX =
++        parseDoubleArg(args, "--center_x", params.harmonicTrap.centerX);
++    params.harmonicTrap.centerY =
++        parseDoubleArg(args, "--center_y", params.harmonicTrap.centerY);
++    params.harmonicTrap.shiftEpsilon =
++        parseDoubleArg(args, "--trap_shift", params.harmonicTrap.shiftEpsilon);
+     params.stringLength = parseIntArg(args, "--M", params.stringLength);
+     params.thermalizationSweeps = parseLongLongArg(args, "--therm", params.thermalizationSweeps);
+     params.measurementSweeps = parseLongLongArg(args, "--sweeps", params.measurementSweeps);
+@@ -1327,12 +1481,36 @@
+               << ", L=" << params.latticeSize
+               << ", beta=" << params.beta
+               << ", t=" << params.hoppingT
++              << ", trap=" << (params.harmonicTrap.enabled ? "on" : "off")
+               << ", M=" << params.stringLength
+               << ", therm=" << params.thermalizationSweeps
+               << ", sweeps=" << params.measurementSweeps
+               << ", chains=" << chains
+               << ", seed=" << params.seed
+-              << "\n\n";
++              << "\n";
++
++    if (params.harmonicTrap.enabled) {
++        const double defaultCenter = 0.5 * static_cast<double>(params.latticeSize - 1);
++        const double centerX = std::isnan(params.harmonicTrap.centerX)
++            ? defaultCenter
++            : params.harmonicTrap.centerX;
++        const double centerY = std::isnan(params.harmonicTrap.centerY)
++            ? defaultCenter
++            : params.harmonicTrap.centerY;
++
++        std::cout << "SHO: m=" << params.harmonicTrap.mass
++                  << ", omega=" << params.harmonicTrap.omega
++                  << ", a=" << params.harmonicTrap.latticeSpacing
++                  << ", center=(" << centerX << ", " << centerY << ")"
++                  << ", shift_epsilon=" << params.harmonicTrap.shiftEpsilon
++                  << "\n";
++
++        if (params.boundary == BoundaryCondition::Periodic) {
++            std::cerr << "Warning: a centered harmonic trap is usually paired with "
++                      << "open boundaries; periodic hopping creates a wraparound seam.\n";
++        }
++    }
++    std::cout << "\n";
+ 
+     std::cout << std::left << std::setw(4) << "N"
+               << std::right << std::setw(14) << "QMC E"
+@@ -1342,6 +1520,8 @@
+               << std::setw(10) << "<Nop>"
+               << std::setw(10) << "<D>"
+               << std::setw(10) << "<H>"
++              << std::setw(10) << "<P>"
++              << std::setw(12) << "<V>"
+               << std::setw(10) << "<sgn>"
+               << std::setw(10) << "sgn_err"
+               << std::setw(10) << "accD"
+@@ -1349,7 +1529,7 @@
+               << std::setw(10) << "accS"
+               << "\n";
+ 
+-    std::cout << std::string(149, '-') << "\n";
++    std::cout << std::string(171, '-') << "\n";
+ 
+     for (int particleCount : particleNumbers) {
+         params.particleCount = particleCount;
+@@ -1363,14 +1543,16 @@
+             result = runParallelChains(params, chains);
+         }
+ 
+-        double exactValue = referenceEnergyValue(
+-            params.model,
+-            params.boundary,
+-            params.latticeSize,
+-            params.beta,
+-            params.hoppingT,
+-            particleCount
+-        );
++        double exactValue = params.harmonicTrap.enabled
++            ? std::numeric_limits<double>::quiet_NaN()
++            : referenceEnergyValue(
++                params.model,
++                params.boundary,
++                params.latticeSize,
++                params.beta,
++                params.hoppingT,
++                particleCount
++            );
+ 
+         printResultRow(result, exactValue);
+ 

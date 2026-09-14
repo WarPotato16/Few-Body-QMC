@@ -1,0 +1,2 @@
+Command terminated by signal 2
+wall=26.84 user=72.29 sys=3.79 CPU=283%

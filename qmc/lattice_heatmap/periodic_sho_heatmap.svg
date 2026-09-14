@@ -1,0 +1,304 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="970" viewBox="0 0 1680 970">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:Arial,Helvetica,sans-serif;} .title{font-size:25px;font-weight:700;} .subtitle{font-size:15px;fill:#333;} .panel{font-size:20px;font-weight:700;} .value{font-size:16px;font-weight:700;} .site{font-size:12px;} .axis{font-size:13px;fill:#333;}</style>
+<text x="840" y="34" text-anchor="middle" class="title">Ground-state lattice heatmap</text>
+<text x="840" y="62" text-anchor="middle" class="subtitle">L=7, N=2, model=hardcore_boson, boundary=periodic, potential=sho, E0=-194.48074056</text>
+<text x="427" y="80" text-anchor="middle" class="panel">Onsite potential V(x,y)</text>
+<text x="1252" y="80" text-anchor="middle" class="panel">Occupation probability &lt;n_i&gt;</text>
+<rect x="60" y="100" width="105" height="105" fill="rgb(20,89,140)" stroke="#222" stroke-width="1.5"/>
+<text x="112" y="150" text-anchor="middle" fill="white" class="value">2.2500</text>
+<text x="112" y="174" text-anchor="middle" fill="white" class="site">site 42 (0,6)</text>
+<rect x="885" y="100" width="105" height="105" fill="rgb(242,247,252)" stroke="#222" stroke-width="1.5"/>
+<text x="937" y="150" text-anchor="middle" fill="#111" class="value">0.002612</text>
+<text x="937" y="174" text-anchor="middle" fill="#111" class="site">site 42 (0,6)</text>
+<rect x="165" y="100" width="105" height="105" fill="rgb(82,133,171)" stroke="#222" stroke-width="1.5"/>
+<text x="217" y="150" text-anchor="middle" fill="white" class="value">1.6250</text>
+<text x="217" y="174" text-anchor="middle" fill="white" class="site">site 43 (1,6)</text>
+<rect x="990" y="100" width="105" height="105" fill="rgb(234,242,248)" stroke="#222" stroke-width="1.5"/>
+<text x="1042" y="150" text-anchor="middle" fill="#111" class="value">0.007491</text>
+<text x="1042" y="174" text-anchor="middle" fill="#111" class="site">site 43 (1,6)</text>
+<rect x="270" y="100" width="105" height="105" fill="rgb(119,159,190)" stroke="#222" stroke-width="1.5"/>
+<text x="322" y="150" text-anchor="middle" fill="white" class="value">1.2500</text>
+<text x="322" y="174" text-anchor="middle" fill="white" class="site">site 44 (2,6)</text>
+<rect x="1095" y="100" width="105" height="105" fill="rgb(219,231,240)" stroke="#222" stroke-width="1.5"/>
+<text x="1147" y="150" text-anchor="middle" fill="#111" class="value">0.017456</text>
+<text x="1147" y="174" text-anchor="middle" fill="#111" class="site">site 44 (2,6)</text>
+<rect x="375" y="100" width="105" height="105" fill="rgb(131,168,196)" stroke="#222" stroke-width="1.5"/>
+<text x="427" y="150" text-anchor="middle" fill="#111" class="value">1.1250</text>
+<text x="427" y="174" text-anchor="middle" fill="#111" class="site">site 45 (3,6)</text>
+<rect x="1200" y="100" width="105" height="105" fill="rgb(210,224,236)" stroke="#222" stroke-width="1.5"/>
+<text x="1252" y="150" text-anchor="middle" fill="#111" class="value">0.023401</text>
+<text x="1252" y="174" text-anchor="middle" fill="#111" class="site">site 45 (3,6)</text>
+<rect x="480" y="100" width="105" height="105" fill="rgb(119,159,190)" stroke="#222" stroke-width="1.5"/>
+<text x="532" y="150" text-anchor="middle" fill="white" class="value">1.2500</text>
+<text x="532" y="174" text-anchor="middle" fill="white" class="site">site 46 (4,6)</text>
+<rect x="1305" y="100" width="105" height="105" fill="rgb(219,231,240)" stroke="#222" stroke-width="1.5"/>
+<text x="1357" y="150" text-anchor="middle" fill="#111" class="value">0.017456</text>
+<text x="1357" y="174" text-anchor="middle" fill="#111" class="site">site 46 (4,6)</text>
+<rect x="585" y="100" width="105" height="105" fill="rgb(82,133,171)" stroke="#222" stroke-width="1.5"/>
+<text x="637" y="150" text-anchor="middle" fill="white" class="value">1.6250</text>
+<text x="637" y="174" text-anchor="middle" fill="white" class="site">site 47 (5,6)</text>
+<rect x="1410" y="100" width="105" height="105" fill="rgb(234,242,248)" stroke="#222" stroke-width="1.5"/>
+<text x="1462" y="150" text-anchor="middle" fill="#111" class="value">0.007491</text>
+<text x="1462" y="174" text-anchor="middle" fill="#111" class="site">site 47 (5,6)</text>
+<rect x="690" y="100" width="105" height="105" fill="rgb(20,89,140)" stroke="#222" stroke-width="1.5"/>
+<text x="742" y="150" text-anchor="middle" fill="white" class="value">2.2500</text>
+<text x="742" y="174" text-anchor="middle" fill="white" class="site">site 48 (6,6)</text>
+<rect x="1515" y="100" width="105" height="105" fill="rgb(242,247,252)" stroke="#222" stroke-width="1.5"/>
+<text x="1567" y="150" text-anchor="middle" fill="#111" class="value">0.002612</text>
+<text x="1567" y="174" text-anchor="middle" fill="#111" class="site">site 48 (6,6)</text>
+<rect x="60" y="205" width="105" height="105" fill="rgb(82,133,171)" stroke="#222" stroke-width="1.5"/>
+<text x="112" y="255" text-anchor="middle" fill="white" class="value">1.6250</text>
+<text x="112" y="279" text-anchor="middle" fill="white" class="site">site 35 (0,5)</text>
+<rect x="885" y="205" width="105" height="105" fill="rgb(234,242,248)" stroke="#222" stroke-width="1.5"/>
+<text x="937" y="255" text-anchor="middle" fill="#111" class="value">0.007491</text>
+<text x="937" y="279" text-anchor="middle" fill="#111" class="site">site 35 (0,5)</text>
+<rect x="165" y="205" width="105" height="105" fill="rgb(143,177,202)" stroke="#222" stroke-width="1.5"/>
+<text x="217" y="255" text-anchor="middle" fill="#111" class="value">1.0000</text>
+<text x="217" y="279" text-anchor="middle" fill="#111" class="site">site 36 (1,5)</text>
+<rect x="990" y="205" width="105" height="105" fill="rgb(214,227,238)" stroke="#222" stroke-width="1.5"/>
+<text x="1042" y="255" text-anchor="middle" fill="#111" class="value">0.020685</text>
+<text x="1042" y="279" text-anchor="middle" fill="#111" class="site">site 36 (1,5)</text>
+<rect x="270" y="205" width="105" height="105" fill="rgb(180,203,221)" stroke="#222" stroke-width="1.5"/>
+<text x="322" y="255" text-anchor="middle" fill="#111" class="value">0.6250</text>
+<text x="322" y="279" text-anchor="middle" fill="#111" class="site">site 37 (2,5)</text>
+<rect x="1095" y="205" width="105" height="105" fill="rgb(175,199,218)" stroke="#222" stroke-width="1.5"/>
+<text x="1147" y="255" text-anchor="middle" fill="#111" class="value">0.045942</text>
+<text x="1147" y="279" text-anchor="middle" fill="#111" class="site">site 37 (2,5)</text>
+<rect x="375" y="205" width="105" height="105" fill="rgb(193,212,227)" stroke="#222" stroke-width="1.5"/>
+<text x="427" y="255" text-anchor="middle" fill="#111" class="value">0.5000</text>
+<text x="427" y="279" text-anchor="middle" fill="#111" class="site">site 38 (3,5)</text>
+<rect x="1200" y="205" width="105" height="105" fill="rgb(153,184,207)" stroke="#222" stroke-width="1.5"/>
+<text x="1252" y="255" text-anchor="middle" fill="#111" class="value">0.060071</text>
+<text x="1252" y="279" text-anchor="middle" fill="#111" class="site">site 38 (3,5)</text>
+<rect x="480" y="205" width="105" height="105" fill="rgb(180,203,221)" stroke="#222" stroke-width="1.5"/>
+<text x="532" y="255" text-anchor="middle" fill="#111" class="value">0.6250</text>
+<text x="532" y="279" text-anchor="middle" fill="#111" class="site">site 39 (4,5)</text>
+<rect x="1305" y="205" width="105" height="105" fill="rgb(175,199,218)" stroke="#222" stroke-width="1.5"/>
+<text x="1357" y="255" text-anchor="middle" fill="#111" class="value">0.045942</text>
+<text x="1357" y="279" text-anchor="middle" fill="#111" class="site">site 39 (4,5)</text>
+<rect x="585" y="205" width="105" height="105" fill="rgb(143,177,202)" stroke="#222" stroke-width="1.5"/>
+<text x="637" y="255" text-anchor="middle" fill="#111" class="value">1.0000</text>
+<text x="637" y="279" text-anchor="middle" fill="#111" class="site">site 40 (5,5)</text>
+<rect x="1410" y="205" width="105" height="105" fill="rgb(214,227,238)" stroke="#222" stroke-width="1.5"/>
+<text x="1462" y="255" text-anchor="middle" fill="#111" class="value">0.020685</text>
+<text x="1462" y="279" text-anchor="middle" fill="#111" class="site">site 40 (5,5)</text>
+<rect x="690" y="205" width="105" height="105" fill="rgb(82,133,171)" stroke="#222" stroke-width="1.5"/>
+<text x="742" y="255" text-anchor="middle" fill="white" class="value">1.6250</text>
+<text x="742" y="279" text-anchor="middle" fill="white" class="site">site 41 (6,5)</text>
+<rect x="1515" y="205" width="105" height="105" fill="rgb(234,242,248)" stroke="#222" stroke-width="1.5"/>
+<text x="1567" y="255" text-anchor="middle" fill="#111" class="value">0.007491</text>
+<text x="1567" y="279" text-anchor="middle" fill="#111" class="site">site 41 (6,5)</text>
+<rect x="60" y="310" width="105" height="105" fill="rgb(119,159,190)" stroke="#222" stroke-width="1.5"/>
+<text x="112" y="360" text-anchor="middle" fill="white" class="value">1.2500</text>
+<text x="112" y="384" text-anchor="middle" fill="white" class="site">site 28 (0,4)</text>
+<rect x="885" y="310" width="105" height="105" fill="rgb(219,231,240)" stroke="#222" stroke-width="1.5"/>
+<text x="937" y="360" text-anchor="middle" fill="#111" class="value">0.017456</text>
+<text x="937" y="384" text-anchor="middle" fill="#111" class="site">site 28 (0,4)</text>
+<rect x="165" y="310" width="105" height="105" fill="rgb(180,203,221)" stroke="#222" stroke-width="1.5"/>
+<text x="217" y="360" text-anchor="middle" fill="#111" class="value">0.6250</text>
+<text x="217" y="384" text-anchor="middle" fill="#111" class="site">site 29 (1,4)</text>
+<rect x="990" y="310" width="105" height="105" fill="rgb(175,199,218)" stroke="#222" stroke-width="1.5"/>
+<text x="1042" y="360" text-anchor="middle" fill="#111" class="value">0.045942</text>
+<text x="1042" y="384" text-anchor="middle" fill="#111" class="site">site 29 (1,4)</text>
+<rect x="270" y="310" width="105" height="105" fill="rgb(217,229,240)" stroke="#222" stroke-width="1.5"/>
+<text x="322" y="360" text-anchor="middle" fill="#111" class="value">0.2500</text>
+<text x="322" y="384" text-anchor="middle" fill="#111" class="site">site 30 (2,4)</text>
+<rect x="1095" y="310" width="105" height="105" fill="rgb(99,145,180)" stroke="#222" stroke-width="1.5"/>
+<text x="1147" y="360" text-anchor="middle" fill="white" class="value">0.095217</text>
+<text x="1147" y="384" text-anchor="middle" fill="white" class="site">site 30 (2,4)</text>
+<rect x="375" y="310" width="105" height="105" fill="rgb(230,238,246)" stroke="#222" stroke-width="1.5"/>
+<text x="427" y="360" text-anchor="middle" fill="#111" class="value">0.1250</text>
+<text x="427" y="384" text-anchor="middle" fill="#111" class="site">site 31 (3,4)</text>
+<rect x="1200" y="310" width="105" height="105" fill="rgb(61,119,161)" stroke="#222" stroke-width="1.5"/>
+<text x="1252" y="360" text-anchor="middle" fill="white" class="value">0.119613</text>
+<text x="1252" y="384" text-anchor="middle" fill="white" class="site">site 31 (3,4)</text>
+<rect x="480" y="310" width="105" height="105" fill="rgb(217,229,240)" stroke="#222" stroke-width="1.5"/>
+<text x="532" y="360" text-anchor="middle" fill="#111" class="value">0.2500</text>
+<text x="532" y="384" text-anchor="middle" fill="#111" class="site">site 32 (4,4)</text>
+<rect x="1305" y="310" width="105" height="105" fill="rgb(99,145,180)" stroke="#222" stroke-width="1.5"/>
+<text x="1357" y="360" text-anchor="middle" fill="white" class="value">0.095217</text>
+<text x="1357" y="384" text-anchor="middle" fill="white" class="site">site 32 (4,4)</text>
+<rect x="585" y="310" width="105" height="105" fill="rgb(180,203,221)" stroke="#222" stroke-width="1.5"/>
+<text x="637" y="360" text-anchor="middle" fill="#111" class="value">0.6250</text>
+<text x="637" y="384" text-anchor="middle" fill="#111" class="site">site 33 (5,4)</text>
+<rect x="1410" y="310" width="105" height="105" fill="rgb(175,199,218)" stroke="#222" stroke-width="1.5"/>
+<text x="1462" y="360" text-anchor="middle" fill="#111" class="value">0.045942</text>
+<text x="1462" y="384" text-anchor="middle" fill="#111" class="site">site 33 (5,4)</text>
+<rect x="690" y="310" width="105" height="105" fill="rgb(119,159,190)" stroke="#222" stroke-width="1.5"/>
+<text x="742" y="360" text-anchor="middle" fill="white" class="value">1.2500</text>
+<text x="742" y="384" text-anchor="middle" fill="white" class="site">site 34 (6,4)</text>
+<rect x="1515" y="310" width="105" height="105" fill="rgb(219,231,240)" stroke="#222" stroke-width="1.5"/>
+<text x="1567" y="360" text-anchor="middle" fill="#111" class="value">0.017456</text>
+<text x="1567" y="384" text-anchor="middle" fill="#111" class="site">site 34 (6,4)</text>
+<rect x="60" y="415" width="105" height="105" fill="rgb(131,168,196)" stroke="#222" stroke-width="1.5"/>
+<text x="112" y="465" text-anchor="middle" fill="#111" class="value">1.1250</text>
+<text x="112" y="489" text-anchor="middle" fill="#111" class="site">site 21 (0,3)</text>
+<rect x="885" y="415" width="105" height="105" fill="rgb(210,224,236)" stroke="#222" stroke-width="1.5"/>
+<text x="937" y="465" text-anchor="middle" fill="#111" class="value">0.023401</text>
+<text x="937" y="489" text-anchor="middle" fill="#111" class="site">site 21 (0,3)</text>
+<rect x="165" y="415" width="105" height="105" fill="rgb(193,212,227)" stroke="#222" stroke-width="1.5"/>
+<text x="217" y="465" text-anchor="middle" fill="#111" class="value">0.5000</text>
+<text x="217" y="489" text-anchor="middle" fill="#111" class="site">site 22 (1,3)</text>
+<rect x="990" y="415" width="105" height="105" fill="rgb(153,184,207)" stroke="#222" stroke-width="1.5"/>
+<text x="1042" y="465" text-anchor="middle" fill="#111" class="value">0.060071</text>
+<text x="1042" y="489" text-anchor="middle" fill="#111" class="site">site 22 (1,3)</text>
+<rect x="270" y="415" width="105" height="105" fill="rgb(230,238,246)" stroke="#222" stroke-width="1.5"/>
+<text x="322" y="465" text-anchor="middle" fill="#111" class="value">0.1250</text>
+<text x="322" y="489" text-anchor="middle" fill="#111" class="site">site 23 (2,3)</text>
+<rect x="1095" y="415" width="105" height="105" fill="rgb(61,119,161)" stroke="#222" stroke-width="1.5"/>
+<text x="1147" y="465" text-anchor="middle" fill="white" class="value">0.119613</text>
+<text x="1147" y="489" text-anchor="middle" fill="white" class="site">site 23 (2,3)</text>
+<rect x="375" y="415" width="105" height="105" fill="rgb(242,247,252)" stroke="#222" stroke-width="1.5"/>
+<text x="427" y="465" text-anchor="middle" fill="#111" class="value">0.0000</text>
+<text x="427" y="489" text-anchor="middle" fill="#111" class="site">site 24 (3,3)</text>
+<rect x="1200" y="415" width="105" height="105" fill="rgb(20,89,140)" stroke="#222" stroke-width="1.5"/>
+<text x="1252" y="465" text-anchor="middle" fill="white" class="value">0.146494</text>
+<text x="1252" y="489" text-anchor="middle" fill="white" class="site">site 24 (3,3)</text>
+<rect x="480" y="415" width="105" height="105" fill="rgb(230,238,246)" stroke="#222" stroke-width="1.5"/>
+<text x="532" y="465" text-anchor="middle" fill="#111" class="value">0.1250</text>
+<text x="532" y="489" text-anchor="middle" fill="#111" class="site">site 25 (4,3)</text>
+<rect x="1305" y="415" width="105" height="105" fill="rgb(61,119,161)" stroke="#222" stroke-width="1.5"/>
+<text x="1357" y="465" text-anchor="middle" fill="white" class="value">0.119613</text>
+<text x="1357" y="489" text-anchor="middle" fill="white" class="site">site 25 (4,3)</text>
+<rect x="585" y="415" width="105" height="105" fill="rgb(193,212,227)" stroke="#222" stroke-width="1.5"/>
+<text x="637" y="465" text-anchor="middle" fill="#111" class="value">0.5000</text>
+<text x="637" y="489" text-anchor="middle" fill="#111" class="site">site 26 (5,3)</text>
+<rect x="1410" y="415" width="105" height="105" fill="rgb(153,184,207)" stroke="#222" stroke-width="1.5"/>
+<text x="1462" y="465" text-anchor="middle" fill="#111" class="value">0.060071</text>
+<text x="1462" y="489" text-anchor="middle" fill="#111" class="site">site 26 (5,3)</text>
+<rect x="690" y="415" width="105" height="105" fill="rgb(131,168,196)" stroke="#222" stroke-width="1.5"/>
+<text x="742" y="465" text-anchor="middle" fill="#111" class="value">1.1250</text>
+<text x="742" y="489" text-anchor="middle" fill="#111" class="site">site 27 (6,3)</text>
+<rect x="1515" y="415" width="105" height="105" fill="rgb(210,224,236)" stroke="#222" stroke-width="1.5"/>
+<text x="1567" y="465" text-anchor="middle" fill="#111" class="value">0.023401</text>
+<text x="1567" y="489" text-anchor="middle" fill="#111" class="site">site 27 (6,3)</text>
+<rect x="60" y="520" width="105" height="105" fill="rgb(119,159,190)" stroke="#222" stroke-width="1.5"/>
+<text x="112" y="570" text-anchor="middle" fill="white" class="value">1.2500</text>
+<text x="112" y="594" text-anchor="middle" fill="white" class="site">site 14 (0,2)</text>
+<rect x="885" y="520" width="105" height="105" fill="rgb(219,231,240)" stroke="#222" stroke-width="1.5"/>
+<text x="937" y="570" text-anchor="middle" fill="#111" class="value">0.017456</text>
+<text x="937" y="594" text-anchor="middle" fill="#111" class="site">site 14 (0,2)</text>
+<rect x="165" y="520" width="105" height="105" fill="rgb(180,203,221)" stroke="#222" stroke-width="1.5"/>
+<text x="217" y="570" text-anchor="middle" fill="#111" class="value">0.6250</text>
+<text x="217" y="594" text-anchor="middle" fill="#111" class="site">site 15 (1,2)</text>
+<rect x="990" y="520" width="105" height="105" fill="rgb(175,199,218)" stroke="#222" stroke-width="1.5"/>
+<text x="1042" y="570" text-anchor="middle" fill="#111" class="value">0.045942</text>
+<text x="1042" y="594" text-anchor="middle" fill="#111" class="site">site 15 (1,2)</text>
+<rect x="270" y="520" width="105" height="105" fill="rgb(217,229,240)" stroke="#222" stroke-width="1.5"/>
+<text x="322" y="570" text-anchor="middle" fill="#111" class="value">0.2500</text>
+<text x="322" y="594" text-anchor="middle" fill="#111" class="site">site 16 (2,2)</text>
+<rect x="1095" y="520" width="105" height="105" fill="rgb(99,145,180)" stroke="#222" stroke-width="1.5"/>
+<text x="1147" y="570" text-anchor="middle" fill="white" class="value">0.095217</text>
+<text x="1147" y="594" text-anchor="middle" fill="white" class="site">site 16 (2,2)</text>
+<rect x="375" y="520" width="105" height="105" fill="rgb(230,238,246)" stroke="#222" stroke-width="1.5"/>
+<text x="427" y="570" text-anchor="middle" fill="#111" class="value">0.1250</text>
+<text x="427" y="594" text-anchor="middle" fill="#111" class="site">site 17 (3,2)</text>
+<rect x="1200" y="520" width="105" height="105" fill="rgb(61,119,161)" stroke="#222" stroke-width="1.5"/>
+<text x="1252" y="570" text-anchor="middle" fill="white" class="value">0.119613</text>
+<text x="1252" y="594" text-anchor="middle" fill="white" class="site">site 17 (3,2)</text>
+<rect x="480" y="520" width="105" height="105" fill="rgb(217,229,240)" stroke="#222" stroke-width="1.5"/>
+<text x="532" y="570" text-anchor="middle" fill="#111" class="value">0.2500</text>
+<text x="532" y="594" text-anchor="middle" fill="#111" class="site">site 18 (4,2)</text>
+<rect x="1305" y="520" width="105" height="105" fill="rgb(99,145,180)" stroke="#222" stroke-width="1.5"/>
+<text x="1357" y="570" text-anchor="middle" fill="white" class="value">0.095217</text>
+<text x="1357" y="594" text-anchor="middle" fill="white" class="site">site 18 (4,2)</text>
+<rect x="585" y="520" width="105" height="105" fill="rgb(180,203,221)" stroke="#222" stroke-width="1.5"/>
+<text x="637" y="570" text-anchor="middle" fill="#111" class="value">0.6250</text>
+<text x="637" y="594" text-anchor="middle" fill="#111" class="site">site 19 (5,2)</text>
+<rect x="1410" y="520" width="105" height="105" fill="rgb(175,199,218)" stroke="#222" stroke-width="1.5"/>
+<text x="1462" y="570" text-anchor="middle" fill="#111" class="value">0.045942</text>
+<text x="1462" y="594" text-anchor="middle" fill="#111" class="site">site 19 (5,2)</text>
+<rect x="690" y="520" width="105" height="105" fill="rgb(119,159,190)" stroke="#222" stroke-width="1.5"/>
+<text x="742" y="570" text-anchor="middle" fill="white" class="value">1.2500</text>
+<text x="742" y="594" text-anchor="middle" fill="white" class="site">site 20 (6,2)</text>
+<rect x="1515" y="520" width="105" height="105" fill="rgb(219,231,240)" stroke="#222" stroke-width="1.5"/>
+<text x="1567" y="570" text-anchor="middle" fill="#111" class="value">0.017456</text>
+<text x="1567" y="594" text-anchor="middle" fill="#111" class="site">site 20 (6,2)</text>
+<rect x="60" y="625" width="105" height="105" fill="rgb(82,133,171)" stroke="#222" stroke-width="1.5"/>
+<text x="112" y="675" text-anchor="middle" fill="white" class="value">1.6250</text>
+<text x="112" y="699" text-anchor="middle" fill="white" class="site">site 7 (0,1)</text>
+<rect x="885" y="625" width="105" height="105" fill="rgb(234,242,248)" stroke="#222" stroke-width="1.5"/>
+<text x="937" y="675" text-anchor="middle" fill="#111" class="value">0.007491</text>
+<text x="937" y="699" text-anchor="middle" fill="#111" class="site">site 7 (0,1)</text>
+<rect x="165" y="625" width="105" height="105" fill="rgb(143,177,202)" stroke="#222" stroke-width="1.5"/>
+<text x="217" y="675" text-anchor="middle" fill="#111" class="value">1.0000</text>
+<text x="217" y="699" text-anchor="middle" fill="#111" class="site">site 8 (1,1)</text>
+<rect x="990" y="625" width="105" height="105" fill="rgb(214,227,238)" stroke="#222" stroke-width="1.5"/>
+<text x="1042" y="675" text-anchor="middle" fill="#111" class="value">0.020685</text>
+<text x="1042" y="699" text-anchor="middle" fill="#111" class="site">site 8 (1,1)</text>
+<rect x="270" y="625" width="105" height="105" fill="rgb(180,203,221)" stroke="#222" stroke-width="1.5"/>
+<text x="322" y="675" text-anchor="middle" fill="#111" class="value">0.6250</text>
+<text x="322" y="699" text-anchor="middle" fill="#111" class="site">site 9 (2,1)</text>
+<rect x="1095" y="625" width="105" height="105" fill="rgb(175,199,218)" stroke="#222" stroke-width="1.5"/>
+<text x="1147" y="675" text-anchor="middle" fill="#111" class="value">0.045942</text>
+<text x="1147" y="699" text-anchor="middle" fill="#111" class="site">site 9 (2,1)</text>
+<rect x="375" y="625" width="105" height="105" fill="rgb(193,212,227)" stroke="#222" stroke-width="1.5"/>
+<text x="427" y="675" text-anchor="middle" fill="#111" class="value">0.5000</text>
+<text x="427" y="699" text-anchor="middle" fill="#111" class="site">site 10 (3,1)</text>
+<rect x="1200" y="625" width="105" height="105" fill="rgb(153,184,207)" stroke="#222" stroke-width="1.5"/>
+<text x="1252" y="675" text-anchor="middle" fill="#111" class="value">0.060071</text>
+<text x="1252" y="699" text-anchor="middle" fill="#111" class="site">site 10 (3,1)</text>
+<rect x="480" y="625" width="105" height="105" fill="rgb(180,203,221)" stroke="#222" stroke-width="1.5"/>
+<text x="532" y="675" text-anchor="middle" fill="#111" class="value">0.6250</text>
+<text x="532" y="699" text-anchor="middle" fill="#111" class="site">site 11 (4,1)</text>
+<rect x="1305" y="625" width="105" height="105" fill="rgb(175,199,218)" stroke="#222" stroke-width="1.5"/>
+<text x="1357" y="675" text-anchor="middle" fill="#111" class="value">0.045942</text>
+<text x="1357" y="699" text-anchor="middle" fill="#111" class="site">site 11 (4,1)</text>
+<rect x="585" y="625" width="105" height="105" fill="rgb(143,177,202)" stroke="#222" stroke-width="1.5"/>
+<text x="637" y="675" text-anchor="middle" fill="#111" class="value">1.0000</text>
+<text x="637" y="699" text-anchor="middle" fill="#111" class="site">site 12 (5,1)</text>
+<rect x="1410" y="625" width="105" height="105" fill="rgb(214,227,238)" stroke="#222" stroke-width="1.5"/>
+<text x="1462" y="675" text-anchor="middle" fill="#111" class="value">0.020685</text>
+<text x="1462" y="699" text-anchor="middle" fill="#111" class="site">site 12 (5,1)</text>
+<rect x="690" y="625" width="105" height="105" fill="rgb(82,133,171)" stroke="#222" stroke-width="1.5"/>
+<text x="742" y="675" text-anchor="middle" fill="white" class="value">1.6250</text>
+<text x="742" y="699" text-anchor="middle" fill="white" class="site">site 13 (6,1)</text>
+<rect x="1515" y="625" width="105" height="105" fill="rgb(234,242,248)" stroke="#222" stroke-width="1.5"/>
+<text x="1567" y="675" text-anchor="middle" fill="#111" class="value">0.007491</text>
+<text x="1567" y="699" text-anchor="middle" fill="#111" class="site">site 13 (6,1)</text>
+<rect x="60" y="730" width="105" height="105" fill="rgb(20,89,140)" stroke="#222" stroke-width="1.5"/>
+<text x="112" y="780" text-anchor="middle" fill="white" class="value">2.2500</text>
+<text x="112" y="804" text-anchor="middle" fill="white" class="site">site 0 (0,0)</text>
+<rect x="885" y="730" width="105" height="105" fill="rgb(242,247,252)" stroke="#222" stroke-width="1.5"/>
+<text x="937" y="780" text-anchor="middle" fill="#111" class="value">0.002612</text>
+<text x="937" y="804" text-anchor="middle" fill="#111" class="site">site 0 (0,0)</text>
+<rect x="165" y="730" width="105" height="105" fill="rgb(82,133,171)" stroke="#222" stroke-width="1.5"/>
+<text x="217" y="780" text-anchor="middle" fill="white" class="value">1.6250</text>
+<text x="217" y="804" text-anchor="middle" fill="white" class="site">site 1 (1,0)</text>
+<rect x="990" y="730" width="105" height="105" fill="rgb(234,242,248)" stroke="#222" stroke-width="1.5"/>
+<text x="1042" y="780" text-anchor="middle" fill="#111" class="value">0.007491</text>
+<text x="1042" y="804" text-anchor="middle" fill="#111" class="site">site 1 (1,0)</text>
+<rect x="270" y="730" width="105" height="105" fill="rgb(119,159,190)" stroke="#222" stroke-width="1.5"/>
+<text x="322" y="780" text-anchor="middle" fill="white" class="value">1.2500</text>
+<text x="322" y="804" text-anchor="middle" fill="white" class="site">site 2 (2,0)</text>
+<rect x="1095" y="730" width="105" height="105" fill="rgb(219,231,240)" stroke="#222" stroke-width="1.5"/>
+<text x="1147" y="780" text-anchor="middle" fill="#111" class="value">0.017456</text>
+<text x="1147" y="804" text-anchor="middle" fill="#111" class="site">site 2 (2,0)</text>
+<rect x="375" y="730" width="105" height="105" fill="rgb(131,168,196)" stroke="#222" stroke-width="1.5"/>
+<text x="427" y="780" text-anchor="middle" fill="#111" class="value">1.1250</text>
+<text x="427" y="804" text-anchor="middle" fill="#111" class="site">site 3 (3,0)</text>
+<rect x="1200" y="730" width="105" height="105" fill="rgb(210,224,236)" stroke="#222" stroke-width="1.5"/>
+<text x="1252" y="780" text-anchor="middle" fill="#111" class="value">0.023401</text>
+<text x="1252" y="804" text-anchor="middle" fill="#111" class="site">site 3 (3,0)</text>
+<rect x="480" y="730" width="105" height="105" fill="rgb(119,159,190)" stroke="#222" stroke-width="1.5"/>
+<text x="532" y="780" text-anchor="middle" fill="white" class="value">1.2500</text>
+<text x="532" y="804" text-anchor="middle" fill="white" class="site">site 4 (4,0)</text>
+<rect x="1305" y="730" width="105" height="105" fill="rgb(219,231,240)" stroke="#222" stroke-width="1.5"/>
+<text x="1357" y="780" text-anchor="middle" fill="#111" class="value">0.017456</text>
+<text x="1357" y="804" text-anchor="middle" fill="#111" class="site">site 4 (4,0)</text>
+<rect x="585" y="730" width="105" height="105" fill="rgb(82,133,171)" stroke="#222" stroke-width="1.5"/>
+<text x="637" y="780" text-anchor="middle" fill="white" class="value">1.6250</text>
+<text x="637" y="804" text-anchor="middle" fill="white" class="site">site 5 (5,0)</text>
+<rect x="1410" y="730" width="105" height="105" fill="rgb(234,242,248)" stroke="#222" stroke-width="1.5"/>
+<text x="1462" y="780" text-anchor="middle" fill="#111" class="value">0.007491</text>
+<text x="1462" y="804" text-anchor="middle" fill="#111" class="site">site 5 (5,0)</text>
+<rect x="690" y="730" width="105" height="105" fill="rgb(20,89,140)" stroke="#222" stroke-width="1.5"/>
+<text x="742" y="780" text-anchor="middle" fill="white" class="value">2.2500</text>
+<text x="742" y="804" text-anchor="middle" fill="white" class="site">site 6 (6,0)</text>
+<rect x="1515" y="730" width="105" height="105" fill="rgb(242,247,252)" stroke="#222" stroke-width="1.5"/>
+<text x="1567" y="780" text-anchor="middle" fill="#111" class="value">0.002612</text>
+<text x="1567" y="804" text-anchor="middle" fill="#111" class="site">site 6 (6,0)</text>
+<text x="60" y="863" class="axis">min 0.00000   max 2.25000</text>
+<text x="885" y="863" class="axis">min 0.002612   max 0.146494   sum 2.000000</text>
+</svg>
