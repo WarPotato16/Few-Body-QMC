@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository contains code, notes, and supporting material for research on Quantum Monte Carlo (QMC) methods applied to interacting quantum many-body systems. This reflects my work done with Dr. Son Nguyen during the Summer Reseaarch Scholars (SRS) program at Washington and Lee University. We studied strongly correlated systems using stochastic sampling techniques, and parallelized the QMC process as to minimize error in ground-state energy calculation without increasing the program's runtime. 
+This repository contains code, notes, and supporting material for research on Quantum Monte Carlo (QMC) methods applied to interacting quantum many-body systems. This reflects my work done with Dr. Son Nguyen during the Summer Research Scholars (SRS) program at Washington and Lee University. We studied strongly correlated systems using stochastic sampling techniques, and parallelized the QMC process as to minimize error in ground-state energy calculation without increasing the program's runtime. 
 
 ## What is Quantum Monte Carlo?
 
