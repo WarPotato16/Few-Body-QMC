@@ -1,6 +1,6 @@
-# QMC on a true 4 x 4 x 4 cubic lattice
+# 3D lattice ground-state potential and occupation heatmap under Simple Harmonic Oscillator
 
-This version changes the physical lattice from an `L x L` square to an `L x L x L` cube. With `--L 4`, the simulation has 64 physical sites rather than 16 sites displayed above a plane.
+This version changes the physical lattice from an `L x L` square to an `L x L x L` cube. With `--L 4` toggled by default, the simulation has 64 physical sites rather than 16 sites displayed above a plane.
 
 ## Model changes
 
@@ -131,4 +131,4 @@ The current update algorithm replays the full operator string for many proposals
 
 ## Smoke-test files
 
-`cubic_4x4x4_smoke.html` and `.csv` only verify the 64-site viewer and post-aggregation export. They use too few sweeps to represent a converged physical distribution.
+`cubic_4x4x4_smoke.html` and `.csv` only verify the L^3-site viewer and post-aggregation export. They use too few sweeps to represent a converged physical distribution, and are not meant to do so either. Look to `cubic_sho_4x4x4.html` for the actual converged physical distribution.

@@ -1,4 +1,4 @@
-# Complete QMC, with and without Simple Harmonic Oscillator
+# Complete QMC, with/without Simple Harmonic Oscillator
 
 Files:
 
